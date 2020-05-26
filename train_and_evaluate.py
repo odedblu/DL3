@@ -35,7 +35,7 @@ def generate_word(lyrics_gen_model, prev_word, midi_vec, word_idx):
     rnd = np.random.random_sample()
     l_acc = len(acc_pred_vec)
     l_rnd = len(acc_pred_vec[acc_pred_vec > rnd])
-    predicted_word = list(word_idx.keys())[l_acc - l_rnd]
+    predicted_word = list(word_idx.keys())[l_acc - l_rnd - 1]
     return predicted_word
 
 
@@ -47,10 +47,34 @@ def generate_song(lyrics_gen_model, start_word, midi_vec, word_idx, length):
         lyrics.append(curr_word)
     return lyrics
 
-model = load_model('model_checkpoint.h5')
-midi_test_vec = dp.midi_representation(r'midi_files/Aqua_-_Barbie_Girl.mid')
-vocabulary_size = dp.get_vocabulary_size()
-x, one_hot_y, instance_to_song, song_indexes, word_indexer = dp.prepare_set(vocabulary_size)
-# generate_word(model, 'hi', midi_test_vec,word_indexer)
-song_ly = generate_song(model, 'hi', midi_test_vec,word_indexer,50)
-print(song_ly)
+
+def train_autoencoder():
+    midi_data_dict = pkl.load(open('midi_vectors.pkl', 'rb'))
+    x_train = []
+    x_val = []
+    for key in midi_data_dict.keys():
+        if np.random.random_sample() <=0.2:
+            x_val.append(midi_data_dict[key])
+        else:
+            x_train.append(midi_data_dict[key])
+    x_train = np.array(x_train)
+    x_val = np.array(x_val)
+    ae_model = m.midi_autoencoder()
+    ae_model[0].fit(x_train,x_train,validation_data=(x_val,x_val),epochs=20, batch_size=1)
+    new_midi_dict = {}
+    for key in midi_data_dict.keys():
+        new_midi_dict[key] = ae_model[1].predict(np.array([midi_data_dict[key]]))[0]
+    pkl.dump(new_midi_dict, open('encoded_midi_vectors','wb'))
+
+
+
+
+train_autoencoder()
+# model = load_model('model_checkpoint.h5')
+# midi_test_vec = dp.midi_representation(r'midi_files/Aqua_-_Barbie_Girl.mid')
+# vocabulary_size = dp.get_vocabulary_size()
+# x, one_hot_y, instance_to_song, song_indexes, word_indexer = dp.prepare_set(vocabulary_size)
+# # generate_word(model, 'hi', midi_test_vec,word_indexer)
+# song_ly = generate_song(model, 'done', midi_test_vec,word_indexer,50)
+# nice_one = ' '.join(song_ly).replace('eos','\n')
+# print(nice_one)

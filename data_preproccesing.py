@@ -143,10 +143,10 @@ def split_train_validation(X, y, instance_to_song, midi_data):
             y_train.append(y[i])
     return x_lyrics_train, x_melody_train, x_lyrics_val, x_melody_val, y_train, y_val
 
-# midi_representation('midi_files/38_Special_-_Caught_Up_In_You.mid')
+y = midi_representation('midi_files/38_Special_-_Caught_Up_In_You.mid')
 # get_song_data('train')
 # vec_size = get_vocabulary_size()
 # x,y,instance_to_song,song_indexes,word_indexer = prepare_set(vec_size)
 # prepare_embedding(word_indexer)
 # emw = pkl.load(open('emb_w.pkl','rb'))
-# x=0
+x=0
