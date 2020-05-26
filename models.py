@@ -6,6 +6,7 @@ from keras.losses import CategoricalCrossentropy
 import data_preproccesing as dp
 
 
+
 def build_model_1(ebmedding_w):
     lyrics_input = Input(shape=(1,), name='lyrics_input')
     midi_input = Input(shape=(297,), name='midi_input')
