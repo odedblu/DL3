@@ -113,8 +113,8 @@ def get_midi_vectors():
         except:
             pass
         time2 = time.time()
-        print('%s song : function took %0.3f ms' % (idx,(time2 - time1) * 1000.0))
-    pkl.dump(midi_data,open('midi_vectors.pkl', 'wb'))
+        print('%s song : function took %0.3f ms' % (idx, (time2 - time1) * 1000.0))
+    pkl.dump(midi_data, open('midi_vectors.pkl', 'wb'))
     return midi_data
 
 
@@ -143,10 +143,12 @@ def split_train_validation(X, y, instance_to_song, midi_data):
             y_train.append(y[i])
     return x_lyrics_train, x_melody_train, x_lyrics_val, x_melody_val, y_train, y_val
 
-y = midi_representation('midi_files/38_Special_-_Caught_Up_In_You.mid')
-# get_song_data('train')
-# vec_size = get_vocabulary_size()
-# x,y,instance_to_song,song_indexes,word_indexer = prepare_set(vec_size)
-# prepare_embedding(word_indexer)
-# emw = pkl.load(open('emb_w.pkl','rb'))
-x=0
+
+if __name__ == '__main__':
+    y = midi_representation('midi_files/38_Special_-_Caught_Up_In_You.mid')
+    get_song_data('train')
+    vec_size = get_vocabulary_size()
+    x, y, instance_to_song, song_indexes, word_indexer = prepare_set(vec_size)
+    prepare_embedding(word_indexer)
+    emw = pkl.load(open('emb_w.pkl', 'rb'))
+    x = 0
