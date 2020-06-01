@@ -9,6 +9,11 @@ import data_preproccesing as dp
 
 
 def build_model_1(embedding_w):
+    """
+    build first model
+    :param embedding_w: embedding weights from the fasttest pretrain model
+    :return:
+    """
     lyrics_input = Input(shape=(1,), name='lyrics_input')
     midi_input = Input(shape=(297,), name='midi_input')
     lyrics_embedding_l = Embedding(embedding_w.shape[0], 300, weights=[embedding_w], input_length=1, trainable=False,
@@ -26,6 +31,10 @@ def build_model_1(embedding_w):
 
 
 def midi_autoencoder():
+    """
+    biuld autoencoder for create new representation for midi vector
+    :return:
+    """
     encoder_input = Input(shape=(297,))
     d1 = Dense(297, activation='relu')(encoder_input)
     d2 = Dense(150, activation='relu')(d1)
@@ -44,6 +53,11 @@ def midi_autoencoder():
 
 
 def build_model_2(embedding_w):
+    """
+    Build the second model
+    :param embedding_w: embedding weights from the fasttest pretrain model
+    :return:
+    """
     lyrics_input = Input(shape=(1,), name='lyrics_input')
     midi_input = Input(shape=(40,), name='midi_input')
     lyrics_embedding_l = Embedding(embedding_w.shape[0], 300, weights=[embedding_w], input_length=1, trainable=False,

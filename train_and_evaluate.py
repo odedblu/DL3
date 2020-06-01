@@ -1,12 +1,19 @@
+import pretty_midi
 import models as m
 import pickle as pkl
 import data_preproccesing as dp
 import numpy as np
+import pandas as pd
+import os
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 from keras.models import load_model
 
 
 def train_model_1():
+    """
+    train the first model
+    :return:
+    """
     vocabulary_size = dp.get_vocabulary_size()
     x, one_hot_y, instance_to_song, song_indexes, word_indexer = dp.prepare_set(vocabulary_size)
     midi_data_dict = pkl.load(open('midi_vectors.pkl', 'rb'))  # dp.get_midi_vectors()
@@ -26,6 +33,10 @@ def train_model_1():
 
 
 def train_model_2():
+    """
+    train the second model
+    :return:
+    """
     vocabulary_size = dp.get_vocabulary_size()
     x, one_hot_y, instance_to_song, song_indexes, word_indexer = dp.prepare_set(vocabulary_size)
     midi_data_dict = pkl.load(open('encoded_midi_vectors', 'rb'))  # dp.get_midi_vectors()
@@ -46,8 +57,17 @@ def train_model_2():
 
 
 def generate_word(lyrics_gen_model, prev_word, midi_vec, word_idx):
+    """
+    generate next word for song. the choose is not determenistic.
+    :param lyrics_gen_model: model that generate words
+    :param prev_word: the previous word in the song
+    :param midi_vec: the midi representation of the song
+    :param word_idx: dictionary of all words.
+    :return:
+    """
     word_emb = np.array([word_idx[prev_word]])
     pred_words = lyrics_gen_model.predict([[word_emb], [midi_vec]])
+    # the next lins choose word non determenistic. the probability is depend on the model's prediction
     acc_pred_vec = np.add.accumulate(pred_words, axis=1)
     rnd = np.random.random_sample()
     l_acc = len(acc_pred_vec)
@@ -56,16 +76,11 @@ def generate_word(lyrics_gen_model, prev_word, midi_vec, word_idx):
     return predicted_word
 
 
-def generate_song(lyrics_gen_model, start_word, midi_vec, word_idx, length):
-    lyrics = [start_word]
-    curr_word = start_word
-    for i in range(length):
-        curr_word = generate_word(lyrics_gen_model, curr_word, midi_vec, word_idx)
-        lyrics.append(curr_word)
-    return lyrics
-
-
 def train_autoencoder():
+    """
+    train autoencoder model
+    :return:
+    """
     midi_data_dict = pkl.load(open('midi_vectors.pkl', 'rb'))
     x_train = []
     x_val = []
@@ -85,19 +100,44 @@ def train_autoencoder():
     ae_model[1].save('autoencoder.h5')
 
 
+def generate_test(model, word_indexer, song_length, test_path, use_autoencoder=False):
+    """
+    This function generate lyrics for all test songs
+    :param model: the model that predict the lyrics
+    :param word_indexer: dictionary for all words
+    :param song_length: how many words to generate
+    :param test_path: path of test file
+    :param use_autoencoder: if use the shrink representation of midi vector
+    :return:
+    """
+    autoencoder = load_model('autoencoder.h5')
+    initial_words = ['hello', 'i', 'always']
+    test_df = pd.read_csv(test_path, header=None)
+    song_names = []
+    for idx, row in test_df.iterrows():
+        song_names.append(row[1])
+        midi_vector = dp.midi_representation(os.path.join('midi_files', (str(row[0]) + ' - ' + str(row[1]) + '.mid')).replace(' ', '_'))
+        if use_autoencoder:
+            midi_vector = autoencoder.predict(np.array([midi_vector]))[0]
+        print(f'song - {row[1]}')
+        for word in initial_words:
+            lyrics = []
+            curr_word = word
+            for i in range(song_length):
+                curr_word = generate_word(model, curr_word, midi_vector, word_indexer)
+                lyrics.append(curr_word)
+            print(f'start word - {word}')
+            print(' '.join(lyrics).replace('eos','\n'))
+        print('******************************')
+    print(song_names)
+
+
+
 if __name__ == '__main__':
-    # midi_data_dict = pkl.load(open('encoded_midi_vectors', 'rb'))
-    # x=0
+    # train_model_1()
     # train_model_2()
     # train_autoencoder()
     model = load_model('model2_checkpoint.h5')
-    autoencoder = load_model('autoencoder.h5')
-    midi_data_dict = pkl.load(open('encoded_midi_vectors', 'rb'))
-    midi_test_vec = dp.midi_representation(r'midi_files/Aqua_-_Barbie_Girl.mid')
-    midi_test_vec = autoencoder.predict(np.array([midi_test_vec]))[0]
     vocabulary_size = dp.get_vocabulary_size()
     x, one_hot_y, instance_to_song, song_indexes, word_indexer = dp.prepare_set(vocabulary_size)
-    # generate_word(model, 'hi', midi_test_vec,word_indexer)
-    song_ly = generate_song(model, 'hello', midi_test_vec,word_indexer,50)
-    nice_one = ' '.join(song_ly).replace('eos','\n')
-    print(nice_one)
+    generate_test(model, word_indexer, 50, r"C:\Users\micha\Documents\michael\שנה ד\סמסטר ח\למידה עמוקה\Assignment3\lyrics_test_set.csv", True)

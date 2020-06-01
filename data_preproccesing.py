@@ -43,6 +43,11 @@ def midi_representation(midi_file_path):
 
 
 def get_song_data(set_name):
+    """
+    create tuples for each song. the first value is the song lyrics after clean the words.
+    :param set_name: train or test
+    :return:
+    """
     if set_name == 'train':
         songs_df = pd.read_csv(r'lyrics_train_set.csv', header=None)
     elif set_name == 'test':
@@ -59,6 +64,9 @@ def get_song_data(set_name):
 
 
 def get_vocabulary_size():
+    """
+    :return: number of all words
+    """
     songs_df = pd.read_csv(r'lyrics_train_set.csv', header=None)
     vocabulary_set = set()
     for idx, row in songs_df.iterrows():
@@ -69,6 +77,11 @@ def get_vocabulary_size():
 
 
 def prepare_set(vocabulary_size):
+    """
+    Prepare X and y for training the model
+    :param vocabulary_size:
+    :return:
+    """
     clean_lyrics = []
     song_indexes = []
     songs_df = pd.read_csv(r'lyrics_train_set.csv', header=None)
@@ -94,7 +107,12 @@ def prepare_set(vocabulary_size):
     return x, one_hot_y, instance_to_song, song_indexes, word_indexer
 
 
-def prepare_embedding(word_idx):  # TODO: check with new wiki model download
+def prepare_embedding(word_idx):
+    """
+    create embedding for all words in word_indexer
+    :param word_idx: dictionary of all words
+    :return: matrix with embedding weights
+    """
     word2vec = KeyedVectors.load_word2vec_format(r'w2v_model\fasttextmodel.vec')
     emb_w = np.zeros((len(word_idx) + 1, 300))
     for w, index in word_idx.items():
@@ -103,22 +121,31 @@ def prepare_embedding(word_idx):  # TODO: check with new wiki model download
 
 
 def get_midi_vectors():
+    """
+    create midi representation for all melodies and save in file
+    :return:
+    """
     midi_data = {}
     songs_df = pd.read_csv(r'lyrics_train_set.csv', header=None)
     for idx, row in songs_df.iterrows():
-        time1 = time.time()
         try:
             midi_data[idx] = midi_representation(
                 os.path.join('midi_files', (str(row[0]) + ' - ' + str(row[1]) + '.mid')).replace(' ', '_'))
         except:
             pass
-        time2 = time.time()
-        print('%s song : function took %0.3f ms' % (idx, (time2 - time1) * 1000.0))
     pkl.dump(midi_data, open('midi_vectors.pkl', 'wb'))
     return midi_data
 
 
 def split_train_validation(X, y, instance_to_song, midi_data):
+    """
+    split data to train and validation
+    :param X:
+    :param y:
+    :param instance_to_song:
+    :param midi_data:
+    :return:
+    """
     x_lyrics_train = []
     x_melody_train = []
     x_lyrics_val = []
